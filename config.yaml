@@ -1,0 +1,7 @@
+batch_size: 32
+
+wandb:
+  project: compare
+
+general:
+  torchinfo_shape: [32,3,32,32]
