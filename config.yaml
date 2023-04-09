@@ -1,7 +1,18 @@
 batch_size: 32
+epochs: 50
+augmentations: ['mix', 'erase', '']
+label_smoothing: 0.1
+
+checkpoint: ./checkpoints/1aap2q6c099.dict
 
 wandb:
-  project: compare
+  project: cifar-omni
+  name: basic_resnet_nonresidual-
 
 general:
   torchinfo_shape: [32,3,32,32]
+
+dataset:
+  train: /home/sergey/code/datasets/CIFAR10/train
+  test: /home/sergey/code/datasets/CIFAR10/test
+  classnames: ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']

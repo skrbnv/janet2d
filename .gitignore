@@ -1,1 +1,6 @@
 /data
+checkpoints/
+__pycache__/
+*.dict
+wandb/
+/.vscode
