@@ -4,3 +4,4 @@ __pycache__/
 *.dict
 wandb/
 /.vscode
+*.pyc
