@@ -5,7 +5,6 @@ from torchvision.datasets import ImageFolder
 import wandb
 import torchinfo
 import argparse
-from libs.data import Dataset
 from libs.functions import train, evaluate, checkpoint, get_random_hash
 
 if __name__ == '__main__':
@@ -71,9 +70,6 @@ if __name__ == '__main__':
         torchinfo.summary(model, tuple(CFG['general']['torchinfo_shape']))
         if WANDB:
             wandb.watch(model)
-
-        trainset = Dataset(CFG['dataset']['train'])
-        testset = Dataset(CFG['dataset']['test'])
 
         stats = CFG['dataset']['stats']
         train_tfms = tf.Compose([
