@@ -21,14 +21,14 @@ def get_device():
     return device
 
 
-def evaluate(model, loader, criterion):
+def evaluate(model, loader, criterion, num_classes):
     device = next(model.parameters()).device
     model.eval()
     losses = []
     correct, total = 0, 0
     with torch.no_grad():
         for inputs, labels in (pbar := tqdm(loader)):
-            labels = encode_classes(labels, 10)
+            labels = encode_classes(labels, num_classes)
             outputs = model(inputs.to(device))
             correct += torch.sum(
                 torch.argmax(outputs.clone().detach().cpu(), axis=1) ==
@@ -43,6 +43,7 @@ def evaluate(model, loader, criterion):
 
 
 def train_loop(inputs, labels, model, criterion, optimizer):
+    #with torch.autograd.set_detect_anomaly(True):
     optimizer.zero_grad()
     outputs = model(inputs)
     loss = criterion(outputs, labels)
@@ -63,7 +64,7 @@ def train(model,
     for augmentation in augmentations:
         for inputs, labels in (pbar := tqdm(loader)):
             inputs = inputs.to(device)
-            labels = encode_classes(labels.to(device), 10)
+            labels = encode_classes(labels.to(device), num_classes)
             if augmentation == 'mix':
                 inputs, labels = _aug.mixup_cutmix(
                     inputs,
