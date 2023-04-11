@@ -2,12 +2,14 @@ batch_size: 32
 epochs: 50
 augmentations: ['mix', 'erase', '']
 label_smoothing: 0.1
+model_file: models.resnet_planar
+model_name: rn18_modified
 
 checkpoint: ./checkpoints/1aap2q6c099.dict
 
 wandb:
   project: cifar-omni
-  name: basic_resnet_nonresidual-
+  name: resnet-planar_
 
 general:
   torchinfo_shape: [32,3,32,32]
@@ -15,4 +17,6 @@ general:
 dataset:
   train: /home/sergey/code/datasets/CIFAR10/train
   test: /home/sergey/code/datasets/CIFAR10/test
-  classnames: ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+  stats: [[0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010]]
+  crop: 32
+  num_classes: 10

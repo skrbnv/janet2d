@@ -1,14 +1,12 @@
 import torch
 from torchvision import transforms as tf
 import yaml
-from models.resnet_planar import rn18
 from torchvision.datasets import ImageFolder
 import wandb
 import torchinfo
 import argparse
 from libs.data import Dataset
 from libs.functions import train, evaluate, checkpoint, get_random_hash
-import datetime
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -22,7 +20,7 @@ if __name__ == '__main__':
                         help='resume')
     parser.add_argument('--config',
                         action='store',
-                        default='config.yaml',
+                        default='flowers.yaml',
                         help='config filename')
     args = parser.parse_args()
     WANDB, RESUME, path = args.wandb, args.resume, args.config
@@ -60,8 +58,9 @@ if __name__ == '__main__':
         else:
             device = torch.device("cpu")
         print("Torch is using device:", device)
-
-        model = rn18()  # Model(3, 10)
+        module = __import__(CFG['model_file'], fromlist=[CFG['model_name']])
+        model_constructor = getattr(module, CFG['model_name'])
+        model = model_constructor()  # Model(3, 10)
         initial_epoch = 0
         model.float()
         model.to(device)
@@ -76,9 +75,9 @@ if __name__ == '__main__':
         trainset = Dataset(CFG['dataset']['train'])
         testset = Dataset(CFG['dataset']['test'])
 
-        stats = ((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        stats = CFG['dataset']['stats']
         train_tfms = tf.Compose([
-            tf.RandomCrop(32, padding=4, padding_mode='reflect'),
+            tf.RandomCrop(CFG['dataset']['crop'], padding=4, padding_mode='reflect'),
             tf.RandomHorizontalFlip(),
             tf.ToTensor(),
             tf.Normalize(*stats, inplace=True)
@@ -86,9 +85,6 @@ if __name__ == '__main__':
         valid_tfms = tf.Compose([tf.ToTensor(), tf.Normalize(*stats)])
         trainset = ImageFolder(CFG['dataset']['train'], train_tfms)
         testset = ImageFolder(CFG['dataset']['test'], valid_tfms)
-
-        classnames = CFG['dataset']['classnames']
-
         trainloader = torch.utils.data.DataLoader(trainset,
                                                   batch_size=CFG['batch_size'],
                                                   shuffle=True,
@@ -104,26 +100,21 @@ if __name__ == '__main__':
         if RESUME and laststate['optimizer'] is not None:
             optimizer.load_state_dict(laststate['optimizer'])
             print("Optimizer state dict loaded from checkpoint")
-        times = []
         for epoch in range(initial_epoch, CFG['epochs']):
             print(f'==================== Epoch: {epoch} ====================')
-            start = datetime.datetime.now()
             train(model=model,
                   loader=trainloader,
                   criterion=criterion,
                   optimizer=optimizer,
                   augmentations=CFG['augmentations'],
                   label_smoothing=CFG['label_smoothing'],
-                  num_classes=10)
-            loss_train, acc_train = evaluate(model, trainloader, criterion)
-            loss_test, acc_test = evaluate(model, testloader, criterion)
-            end = datetime.datetime.now()
-            times.append(end - start)
+                  num_classes=CFG['dataset']['num_classes'])
+            loss_train, acc_train = evaluate(model, trainloader, criterion, CFG['dataset']['num_classes'])
+            loss_test, acc_test = evaluate(model, testloader, criterion, CFG['dataset']['num_classes'])
             print(f'  Training loss: {loss_train:.4f}')
             print(f'  Training acc:  {acc_train*100:.2f}%')
             print(f'  Testing loss:  {loss_test:.4f}')
             print(f'  Testing acc:   {acc_test*100:.2f}%')
-            print(f'  Time:          {end-start}')
 
             if WANDB:
                 wandb.log({
